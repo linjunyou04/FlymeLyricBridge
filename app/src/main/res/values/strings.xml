@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Flyme Lyric Bridge</string>
+    <string name="accessibility_description">用于读取屏幕歌词以桥接到 Flyme 状态栏</string>
+</resources>
