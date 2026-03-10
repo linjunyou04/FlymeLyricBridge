@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 运行时需要请求 POST_NOTIFICATIONS (Android 13+) -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
         android:label="Flyme Lyric Bridge"
         android:icon="@android:drawable/ic_media_play"
-        android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         <activity 
@@ -19,12 +17,20 @@
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- NotificationListenerService -->
+        <receiver 
+            android:name=".LyricReceiver" 
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.flymelyric.ACTION_LYRIC" />
+                <action android:name="com.proify.lyricon.ACTION_RESPONSE_LYRICS" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".service.LyricNotificationListener"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
@@ -32,19 +38,6 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
-        </service>
-
-        <!-- AccessibilityService -->
-        <service
-            android:name=".service.LyricAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
         </service>
 
     </application>

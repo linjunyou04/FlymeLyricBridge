@@ -1,6 +1,9 @@
 package com.example.flymelyric.service;
 
+import android.annotation.SuppressLint;
+import android.app.Notification;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
@@ -12,21 +15,19 @@ import com.example.flymelyric.LogManager;
 
 import java.util.List;
 
+@SuppressLint("OverrideAbstract")
 public class LyricNotificationListener extends NotificationListenerService {
+
     private MediaSessionManager mediaSessionManager;
-    private ComponentName thisComponent;
+    private ComponentName thisComp;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        thisComponent = new ComponentName(this, LyricNotificationListener.class);
-        try {
-            mediaSessionManager = (MediaSessionManager) getSystemService(MEDIA_SESSION_SERVICE);
-            registerMediaControllers();
-            LogManager.log("NotificationListener created");
-        } catch (Exception e) {
-            LogManager.log("NotificationListener create error: " + e.toString());
-        }
+        thisComp = new ComponentName(this, LyricNotificationListener.class);
+        mediaSessionManager = (MediaSessionManager) getSystemService(MEDIA_SESSION_SERVICE);
+        registerMediaControllers();
+        LogManager.log("NotificationListener created");
     }
 
     @Override
@@ -39,14 +40,20 @@ public class LyricNotificationListener extends NotificationListenerService {
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         try {
-            // 尝试从通知 extras 中提取歌词
-            CharSequence text = sbn.getNotification().extras.getCharSequence("android.text");
-            if (text == null) text = sbn.getNotification().extras.getCharSequence("android.subText");
-            if (text != null) {
-                String s = text.toString();
-                if (looksLikeLyric(s)) {
-                    LogManager.log("Notification lyric: " + s);
-                    LyricPosterService.updateLyric(getApplicationContext(), s);
+            Notification n = sbn.getNotification();
+            if (n == null || n.extras == null) return;
+            CharSequence text = n.extras.getCharSequence("android.text");
+            CharSequence big = n.extras.getCharSequence("android.bigText");
+            String candidate = (big != null ? big.toString() : (text != null ? text.toString() : null));
+            if (candidate != null && candidate.length() > 1 && candidate.length() < 400) {
+                if (!candidate.matches("^[0-9: ]+$")) {
+                    // send to UI & poster
+                    Intent ui = new Intent("com.example.flymelyric.UI_UPDATE");
+                    ui.putExtra("lyric", candidate);
+                    ui.putExtra("src_pkg", sbn.getPackageName());
+                    sendBroadcast(ui);
+                    LyricPosterService.updateLyric(getApplicationContext(), candidate);
+                    LogManager.log("Notification lyric: " + candidate);
                 }
             }
         } catch (Throwable t) {
@@ -57,76 +64,59 @@ public class LyricNotificationListener extends NotificationListenerService {
     private void registerMediaControllers() {
         try {
             if (mediaSessionManager == null) return;
-            List<MediaController> controllers = mediaSessionManager.getActiveSessions(thisComponent);
-            if (controllers == null) return;
-
-            for (MediaController controller : controllers) {
+            List<MediaController> list = mediaSessionManager.getActiveSessions(thisComp);
+            if (list == null) return;
+            for (MediaController c : list) {
                 try {
-                    MediaMetadata meta = controller.getMetadata();
-                    String lyric = extractLyricFromMetadata(meta);
-                    if (lyric != null) deliverLyric(lyric);
-
-                    controller.registerCallback(new MediaController.Callback() {
+                    MediaMetadata md = c.getMetadata();
+                    String lyric = extractLyricFromMetadata(md);
+                    if (lyric != null) {
+                        Intent ui = new Intent("com.example.flymelyric.UI_UPDATE");
+                        ui.putExtra("lyric", lyric);
+                        ui.putExtra("src_pkg", c.getPackageName());
+                        sendBroadcast(ui);
+                        LyricPosterService.updateLyric(getApplicationContext(), lyric);
+                        LogManager.log("MediaSession lyric: " + lyric);
+                    }
+                    c.registerCallback(new MediaController.Callback() {
                         @Override
                         public void onMetadataChanged(MediaMetadata metadata) {
                             try {
                                 String l = extractLyricFromMetadata(metadata);
                                 if (l != null) {
-                                    LogManager.log("MediaSession callback lyric: " + l);
-                                    deliverLyric(l);
+                                    Intent ui = new Intent("com.example.flymelyric.UI_UPDATE");
+                                    ui.putExtra("lyric", l);
+                                    ui.putExtra("src_pkg", c.getPackageName());
+                                    sendBroadcast(ui);
+                                    LyricPosterService.updateLyric(getApplicationContext(), l);
+                                    LogManager.log("MediaSession cb lyric: " + l);
                                 }
                             } catch (Throwable ignored) {}
                         }
                     });
-                } catch (Throwable ignoreInner) {}
+                } catch (Throwable ignored) {}
             }
-
-            // 优先扫描可能来自蓝牙/车机的 controllers（简单 heuristics）
-            for (MediaController c : controllers) {
-                try {
-                    String pkg = c.getPackageName();
-                    if (pkg != null && pkg.toLowerCase().contains("bluetooth")) {
-                        MediaMetadata m = c.getMetadata();
-                        String l = extractLyricFromMetadata(m);
-                        if (l != null) deliverLyric(l);
-                    }
-                } catch (Throwable ignore) {}
-            }
-        } catch (SecurityException se) {
-            LogManager.log("No permission to get active sessions");
         } catch (Throwable t) {
-            LogManager.log("registerMediaControllers exception: " + t.toString());
+            LogManager.log("registerMediaControllers err: " + t.toString());
         }
     }
 
-    private String extractLyricFromMetadata(MediaMetadata meta) {
-        if (meta == null) return null;
+    private String extractLyricFromMetadata(MediaMetadata md) {
+        if (md == null) return null;
         try {
-            // 常见 key 名称尝试
-            CharSequence ly = meta.getText("android.media.metadata.LYRICS");
+            CharSequence ly = md.getText("android.media.metadata.LYRICS");
             if (ly != null) return ly.toString();
-
-            // 一些播放器会把歌词放在 extras 或 title/subtitle
-            ly = meta.getText(MediaMetadata.METADATA_KEY_TITLE);
-            if (ly != null && looksLikeLyric(ly.toString())) return ly.toString();
-
-            ly = meta.getText(MediaMetadata.METADATA_KEY_ALBUM);
+            ly = md.getText(MediaMetadata.METADATA_KEY_TITLE);
             if (ly != null && looksLikeLyric(ly.toString())) return ly.toString();
         } catch (Throwable ignored) {}
         return null;
-    }
-
-    private void deliverLyric(String lyric) {
-        if (lyric == null || lyric.trim().isEmpty()) return;
-        LyricPosterService.updateLyric(getApplicationContext(), lyric);
     }
 
     private boolean looksLikeLyric(String s) {
         if (s == null) return false;
         s = s.trim();
         if (s.length() < 2 || s.length() > 400) return false;
-        // 简单规则：不可为纯数字或时间戳
-        if (s.matches("^[0-9:]+$")) return false;
+        if (s.matches("^[0-9: ]+$")) return false;
         return s.matches(".*[\\p{L}，。,.?!'\"].*");
     }
 }

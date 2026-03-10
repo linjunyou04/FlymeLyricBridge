@@ -1,28 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fillViewport="true" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground">
 
-    <Button
-        android:id="@+id/btn_open_notif"
-        android:text="打开通知访问设置"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+    <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/btn_open_a11y"
-        android:text="打开辅助功能设置"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        <TextView android:id="@+id/tv_title" android:text="Flyme Lyric Bridge" android:textSize="20sp" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 
-    <Button
-        android:id="@+id/btn_settings"
-        android:text="设置 / 导出日志"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
-</LinearLayout>
+        <View android:layout_height="12dp" android:layout_width="match_parent"/>
+
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" android:cardElevation="4dp" android:cardCornerRadius="8dp">
+            <LinearLayout android:padding="12dp" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView android:text="当前播放（包名/标题）" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                <TextView android:id="@+id/tv_app" android:text="未检测到" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:cardCornerRadius="8dp" android:cardElevation="4dp" android:layout_marginBottom="12dp">
+            <LinearLayout android:padding="12dp" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView android:text="当前歌词" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                <TextView android:id="@+id/tv_lyric" android:text="尚未获取歌词" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textSize="16sp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:cardElevation="4dp" android:cardCornerRadius="8dp" android:layout_marginBottom="12dp">
+            <LinearLayout android:padding="12dp" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView android:text="状态" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                <TextView android:id="@+id/tv_status" android:text="未开始" android:layout_marginTop="6dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                <TextView android:id="@+id/tv_source" android:text="来源: 未知" android:layout_marginTop="6dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <Button android:id="@+id/btn_open_notif" android:text="打开通知访问设置" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/btn_open_a11y" android:text="打开辅助功能设置" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
+        <Button android:id="@+id/btn_export_log" android:text="导出日志 / 设置" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
+        <Button android:id="@+id/btn_settings" android:text="更多设置" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
+
+    </LinearLayout>
+</ScrollView>

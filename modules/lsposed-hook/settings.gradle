@@ -1,0 +1,2 @@
+rootProject.name = 'lsposed-hook'
+include ':app'

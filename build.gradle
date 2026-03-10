@@ -1,4 +1,3 @@
-// FlymeLyricBridge/build.gradle
 buildscript {
     repositories {
         google()

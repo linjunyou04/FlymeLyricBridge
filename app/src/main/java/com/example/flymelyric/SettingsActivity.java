@@ -10,25 +10,23 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.File;
 
 public class SettingsActivity extends AppCompatActivity {
+
     Button exportLog;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle s) {
+        super.onCreate(s);
         setContentView(R.layout.activity_settings);
-
         exportLog = findViewById(R.id.exportLog);
-        exportLog.setOnClickListener(v -> export());
-    }
-
-    private void export() {
-        try {
-            File file = LogManager.getLogFile();
-            if (file == null || !file.exists()) return;
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType("text/plain");
-            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-            startActivity(Intent.createChooser(intent, "导出日志"));
-        } catch (Exception ignored) {}
+        exportLog.setOnClickListener(v -> {
+            try {
+                File f = LogManager.getLogFile();
+                if (f == null || !f.exists()) return;
+                Intent i = new Intent(Intent.ACTION_SEND);
+                i.setType("text/plain");
+                i.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(f));
+                startActivity(Intent.createChooser(i, "导出日志"));
+            } catch (Exception ignored) {}
+        });
     }
 }
